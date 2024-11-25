@@ -1,5 +1,5 @@
-from observers.observers.models.openai import wrap_openai
-from observers.stores.argilla import ArgillaStore
+from observers.observers import wrap_openai
+from observers.stores import ArgillaStore
 from openai import OpenAI
 
 api_url = "<argilla-api-url>"

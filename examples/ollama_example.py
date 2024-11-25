@@ -1,5 +1,5 @@
-from observers.observers.models.openai import wrap_openai
-from observers.stores.duckdb import DuckDBStore
+from observers.observers import wrap_openai
+from observers.stores import DuckDBStore
 from openai import OpenAI
 
 store = DuckDBStore()
