@@ -4,7 +4,7 @@ from openai import OpenAI
 
 store = DatasetsStore(
     repo_name="gpt-4o-traces",
-    every=5,  # sync every 5 messages
+    every=5,  # sync every 5 minutes
 )
 
 openai_client = OpenAI()

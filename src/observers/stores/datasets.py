@@ -2,14 +2,13 @@ import atexit
 import json
 import os
 import uuid
+import tempfile
 from dataclasses import asdict, dataclass, field
 from typing import List, Optional
 
 from huggingface_hub import CommitScheduler, login, metadata_update, whoami
 
 from observers.stores.base import Store
-
-DEFAULT_DATA_FOLDER = "store"
 
 
 @dataclass
@@ -20,7 +19,7 @@ class DatasetsStore(Store):
 
     org_name: Optional[str] = field(default=None)
     repo_name: Optional[str] = field(default=None)
-    folder_path: Optional[str] = field(default=DEFAULT_DATA_FOLDER)
+    folder_path: Optional[str] = field(default=None)
     every: Optional[int] = field(default=5)
     path_in_repo: Optional[str] = field(default=None)
     revision: Optional[str] = field(default=None)
@@ -32,13 +31,27 @@ class DatasetsStore(Store):
 
     _filename: Optional[str] = field(default=None)
     _scheduler: Optional[CommitScheduler] = None
+    _temp_dir: Optional[str] = field(default=None, init=False)
 
     def __post_init__(self):
-        """Initialize the store"""
+        """Initialize the store and create temporary directory"""
         try:
             whoami(token=self.token or os.getenv("HF_TOKEN"))
         except Exception:
             login()
+
+        self._temp_dir = tempfile.mkdtemp(prefix="observers_dataset_")
+
+        if self.folder_path is None:
+            self.folder_path = self._temp_dir
+
+        atexit.register(self._cleanup)
+
+    def _cleanup(self):
+        """Clean up temporary directory on exit"""
+        if self._temp_dir and os.path.exists(self._temp_dir):
+            import shutil
+            shutil.rmtree(self._temp_dir)
 
     def _init_table(self, record: "Record"):
         repo_name = self.repo_name or record.table_name
@@ -47,7 +60,7 @@ class DatasetsStore(Store):
         self._filename = f"{record.table_name}_{uuid.uuid4()}.json"
         self._scheduler = CommitScheduler(
             repo_id=repo_id,
-            folder_path=self.folder_path or DEFAULT_DATA_FOLDER,
+            folder_path=self.folder_path,
             every=self.every,
             path_in_repo=self.path_in_repo,
             repo_type="dataset",
@@ -71,7 +84,7 @@ class DatasetsStore(Store):
         cls,
         org_name: Optional[str] = None,
         repo_name: Optional[str] = None,
-        folder_path: Optional[str] = DEFAULT_DATA_FOLDER,
+        folder_path: Optional[str] = None,
         every: Optional[int] = 5,
         path_in_repo: Optional[str] = None,
         revision: Optional[str] = None,
