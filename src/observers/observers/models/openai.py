@@ -3,7 +3,9 @@ import uuid
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
-from observers.observers.base import Message, Record
+from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
+
+from observers.observers.base import Record
 from observers.stores.duckdb import DuckDBStore
 
 if TYPE_CHECKING:
@@ -22,7 +24,7 @@ class OpenAIResponseRecord(Record):
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     model: str = None
     timestamp: str = field(default_factory=lambda: datetime.datetime.now().isoformat())
-    messages: List[Message] = None
+    messages: List[ChatCompletionMessageParam] = None
     assistant_message: Optional[str] = None
     completion_tokens: Optional[int] = None
     prompt_tokens: Optional[int] = None
@@ -65,7 +67,7 @@ class OpenAIResponseRecord(Record):
             id VARCHAR PRIMARY KEY,
             model VARCHAR,
             timestamp TIMESTAMP,
-            messages STRUCT(role VARCHAR, content VARCHAR)[],
+            messages JSON,
             assistant_message TEXT,
             completion_tokens INTEGER,
             prompt_tokens INTEGER,
@@ -160,7 +162,14 @@ class OpenAIResponseRecord(Record):
 
     @property
     def json_fields(self):
-        return ["tool_calls", "function_call", "tags", "properties", "raw_response"]
+        return [
+            "tool_calls",
+            "function_call",
+            "tags",
+            "properties",
+            "raw_response",
+            "messages",
+        ]
 
 
 def wrap_openai(

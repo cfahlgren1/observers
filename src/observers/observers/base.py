@@ -1,15 +1,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from argilla import Argilla
-
-
-@dataclass
-class Message:
-    role: Literal["system", "user", "assistant", "function"]
-    content: str
 
 
 @dataclass
