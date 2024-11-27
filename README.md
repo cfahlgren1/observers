@@ -64,6 +64,9 @@ The `wrap_openai` function allows you to wrap any OpenAI compliant LLM provider.
 | [Hugging Face Datasets](https://huggingface.co/docs/huggingface_hub/en/package_reference/io-management#datasets) | [example](./examples/datasets_example.py) | ❌ | ❌ | ✅ | ✅ | ✅ |
 | [DuckDB](https://duckdb.org/) | [example](./examples/duckdb_example.py.py) | ❌ | ✅ | ✅ | ❌ | ✅ |
 | [Argilla](https://argilla.io/) | [example](./examples/argilla_example.py) | ✅ | ❌ | ✅ | ✅ | ❌ |
+| [OpenTelemetry](https://opentelemetry.io/) | [example](./examples/stores/opentelemetry_example.py) | ︖* | ︖* | ︖* | ︖* | ︖* |
+| [Honeycomb](https://honeycomb.io/) | [example](./examples/stores/opentelemetry_example.py) | ✅ |❌| ✅ | ✅ | ✅ |
+* These features, for the OpenTelemetry store, depend upon the provider you use
 
 ### Viewing / Querying
 
@@ -97,6 +100,9 @@ The default store is [DuckDB](https://duckdb.org/) and can be viewed and queried
 The Argilla Store allows you to sync your observations to [Argilla](https://argilla.io/). To use it, you first need to create a [free Argilla deployment on Hugging Face](https://docs.argilla.io/latest/getting_started/quickstart/). Take a look at [the example](./examples/argilla_example.py) for more details.
 
 ![Argilla Store](./assets/argilla.png)
+
+#### OpenTelemetry Store
+The OpenTelemetry "Store" allows you to sync your observations to any provider that supports OpenTelemetry! Examples are provided for [Honeycomb](https://honeycomb.io), but any provider that supplies OpenTelemetry compatible environment variables should Just Work®, and your queries will be executed as usual in your provider, against _trace_ data coming from Observers.
 
 ## Contributing
 
