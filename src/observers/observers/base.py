@@ -8,12 +8,6 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class Message:
-    role: Literal["system", "user", "assistant", "function"]
-    content: str
-
-
-@dataclass
 class Record(ABC):
     """
     Base class for storing model response information
