@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
 
 from datasets import Dataset
+from datasets import Image as DatasetImage
 from huggingface_hub import CommitScheduler, login, metadata_update, whoami
 from PIL import Image
 
@@ -23,7 +24,6 @@ if TYPE_CHECKING:
 def push_to_hub(self):
     """Push pending changes to the Hugging Face Hub"""
     with self.lock:
-        data = []
         records = [
             json.loads(line)
             for json_file in Path(self.folder_path).rglob("*.json")
@@ -31,14 +31,11 @@ def push_to_hub(self):
         ]
 
         for record in records:
-            if record.get("image") and record["image"].get("path"):
+            if "image" in record and "path" in record["image"]:
                 image_path = Path(self.folder_path) / record["image"]["path"]
-                with Image.open(image_path) as img:
-                    record["image"] = img.copy()
-            data.append(record)
+                record["image"] = str(image_path)
 
-        dataset = Dataset.from_list(data)
-
+        dataset = Dataset.from_list(records).cast_column("image", DatasetImage())
         dataset.push_to_hub(
             repo_id=self.repo_id, token=self.token, private=self.private
         )
