@@ -8,6 +8,21 @@ from openai.types.chat import (
     ChatCompletionMessage,
 )
 from openai.types.chat.chat_completion import Choice, CompletionUsage
+from openai.types.chat.chat_completion_content_part_input_audio_param import (
+    InputAudio,
+)
+from openai.types.chat.chat_completion_content_part_param import (
+    ChatCompletionContentPartImageParam,
+    ChatCompletionContentPartInputAudioParam,
+    ChatCompletionContentPartTextParam,
+)
+from openai.types.chat.chat_completion_message_param import (
+    ChatCompletionAssistantMessageParam,
+    ChatCompletionFunctionMessageParam,
+    ChatCompletionSystemMessageParam,
+    ChatCompletionToolMessageParam,
+    ChatCompletionUserMessageParam,
+)
 
 
 def get_example_files():
@@ -29,6 +44,24 @@ def mock_clients():
     def get_fake_return():
         return ChatCompletion(
             id=str(uuid.uuid4()),
+            messages=[
+                ChatCompletionSystemMessageParam(content=""),
+                ChatCompletionUserMessageParam(
+                    content=ChatCompletionContentPartTextParam(text="test")
+                ),
+                ChatCompletionAssistantMessageParam(content=""),
+                ChatCompletionUserMessageParam(
+                    content=ChatCompletionContentPartImageParam(image_url="image")
+                ),
+                ChatCompletionAssistantMessageParam(content=""),
+                ChatCompletionUserMessageParam(
+                    content=ChatCompletionContentPartInputAudioParam(
+                        input_audio=InputAudio(data="audio", format="wav")
+                    )
+                ),
+                ChatCompletionFunctionMessageParam(content=""),
+                ChatCompletionToolMessageParam(content=""),
+            ],
             choices=[
                 Choice(
                     message=ChatCompletionMessage(
@@ -37,7 +70,7 @@ def mock_clients():
                     finish_reason="stop",
                     index=0,
                     logprobs=None,
-                )
+                ),
             ],
             model="gpt-4o",
             usage=CompletionUsage(
