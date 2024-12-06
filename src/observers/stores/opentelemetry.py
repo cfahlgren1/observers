@@ -74,26 +74,33 @@ class OpenTelemetryStore(Store):
                 span.set_attribute("connected", True)
                 self.root_span = span
 
-    def add(self, record: Record):
+    def add(self, record: Record, keys: list[str] = None):
         """Add a new record to the store"""
+        if keys:
+            event_fields = keys
+        else:
+            # Split out to be easily edited if the record api changes
+            event_fields = [
+                "assistant_message",
+                "completion_tokens",
+                "total_tokens",
+                "prompt_tokens",
+                "finish_reason",
+                "tool_calls",
+                "function_call",
+                "properties",
+                "model",
+                "timestamp",
+                "tags",
+                "id",
+                "error",
+            ]
         with trace.use_span(self.root_span):
-            with self.tracer.start_as_current_span(f"{self.namespace}.add") as span:
-                # Split out to be easily edited if the record api changes
-                event_fields = [
-                    "assistant_message",
-                    "completion_tokens",
-                    "total_tokens",
-                    "prompt_tokens",
-                    "finish_reason",
-                    "tool_calls",
-                    "function_call",
-                    "tags",
-                    "properties",
-                    "error",
-                    "model",
-                    "timestamp",
-                    "id",
-                ]
+            if record.event_type:
+                span_name = f"{self.namespace}.{record.event_type}"
+            else:
+                span_name = f"{self.namespace}.add"
+            with self.tracer.start_as_current_span(span_name) as span:
                 for field in event_fields:
                     data = record.__getattribute__(field)
                     if data:
@@ -104,8 +111,9 @@ class OpenTelemetryStore(Store):
                         else:
                             span.set_attribute(field, data)
                 # Special case for `messages` as it is a list of dicts
-                messages = [str(message) for message in record.messages]
-                span.set_attribute("messages", messages)
+                if record.messages:
+                    messages = [str(message) for message in record.messages]
+                    span.set_attribute("messages", messages)
 
     @classmethod
     def connect(cls, tracer=None, root_span=None, namespace=None, exporter=None):

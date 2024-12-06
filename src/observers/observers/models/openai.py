@@ -187,6 +187,20 @@ class OpenAIResponseRecord(Record):
     def text_fields(self):
         return []
 
+    def all_fields(self):
+        return [
+            "assistant_message",
+            "completion_tokens",
+            "total_tokens",
+            "prompt_tokens",
+            "finish_reason",
+            "tool_calls",
+            "function_call",
+            "properties",
+            "model",
+            "timestamp",
+        ]
+
 
 def wrap_openai(
     client: "OpenAI",
