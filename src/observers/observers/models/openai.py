@@ -30,12 +30,28 @@ class OpenAIResponseRecord(Record):
     finish_reason: str = None
     tool_calls: Optional[Any] = None
     function_call: Optional[Any] = None
+    arguments: Optional[Dict[str, Any]] = None
 
     @classmethod
     def create(cls, response=None, error=None, **kwargs):
         """Create a response record from an API response or error"""
+        model = kwargs.pop("model", None)
+        messages = kwargs.pop("messages", None)
+        tags = kwargs.pop("tags", None)
+        properties = kwargs.pop("properties", None)
+
+        arguments = kwargs
+
         if not response:
-            return cls(finish_reason="error", error=str(error), **kwargs)
+            return cls(
+                finish_reason="error",
+                error=str(error),
+                model=model,
+                messages=messages,
+                tags=tags,
+                properties=properties,
+                arguments=arguments,
+            )
 
         dump = response.model_dump()
         choices = dump.get("choices", [{}])[0].get("message", {})
@@ -51,7 +67,11 @@ class OpenAIResponseRecord(Record):
             tool_calls=choices.get("tool_calls"),
             function_call=choices.get("function_call"),
             raw_response=dump,
-            **kwargs,
+            model=model,
+            messages=messages,
+            tags=tags,
+            properties=properties,
+            arguments=arguments,
         )
 
     @property
@@ -73,6 +93,7 @@ class OpenAIResponseRecord(Record):
             "error",
             "raw_response",
             "synced_at",
+            "arguments",
         ]
 
     @property
@@ -94,7 +115,8 @@ class OpenAIResponseRecord(Record):
             properties JSON,
             error VARCHAR,
             raw_response JSON,
-            synced_at TIMESTAMP
+            synced_at TIMESTAMP,
+            arguments JSON
         )
         """
 
@@ -133,6 +155,13 @@ class OpenAIResponseRecord(Record):
                     name="properties",
                     template="{{ json record.fields.properties }}",
                     description="The properties associated with the response.",
+                    required=False,
+                    _client=client,
+                ),
+                rg.CustomField(
+                    name="arguments",
+                    template="{{ json record.fields.arguments }}",
+                    description="The arguments passed to the OpenAI API.",
                     required=False,
                     _client=client,
                 ),
@@ -177,7 +206,14 @@ class OpenAIResponseRecord(Record):
 
     @property
     def json_fields(self):
-        return ["tool_calls", "function_call", "tags", "properties", "raw_response"]
+        return [
+            "tool_calls",
+            "function_call",
+            "tags",
+            "properties",
+            "raw_response",
+            "arguments",
+        ]
 
     @property
     def image_fields(self):
@@ -215,23 +251,34 @@ def wrap_openai(
         try:
             response = original_create(*args, **kwargs)
 
+            additional_kwargs = {
+                k: v for k, v in kwargs.items() if k not in ["model", "messages"]
+            }
+
             entry = OpenAIResponseRecord.create(
                 response=response,
                 messages=kwargs.get("messages"),
                 model=kwargs.get("model"),
                 tags=tags,
                 properties=properties,
+                **additional_kwargs,
             )
             store.add(entry)
             return response
 
         except Exception as e:
+            additional_kwargs = {
+                k: v for k, v in kwargs.items() if k not in ["model", "messages"]
+            }
+
             entry = OpenAIResponseRecord.create(
                 error=e,
                 messages=kwargs.get("messages"),
                 model=kwargs.get("model"),
                 tags=tags,
                 properties=properties,
+                arguments=additional_kwargs,
+                **additional_kwargs,
             )
             store.add(entry)
             raise
