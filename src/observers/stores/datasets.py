@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 from datasets import Dataset
 from datasets import Image as DatasetImage
-from huggingface_hub import CommitScheduler, login, metadata_update, whoami
+from huggingface_hub import CommitScheduler, login, metadata_update, whoami, upload_file
 from PIL import Image
 
 from observers.stores.base import Store
@@ -24,21 +24,15 @@ if TYPE_CHECKING:
 def push_to_hub(self):
     """Push pending changes to the Hugging Face Hub"""
     with self.lock:
-        records = [
-            json.loads(line)
-            for json_file in Path(self.folder_path).rglob("*.json")
-            for line in open(json_file)
-        ]
-
-        for record in records:
-            if "image" in record and "path" in record["image"]:
-                image_path = Path(self.folder_path) / record["image"]["path"]
-                record["image"] = str(image_path)
-
-        dataset = Dataset.from_list(records).cast_column("image", DatasetImage())
-        dataset.push_to_hub(
-            repo_id=self.repo_id, token=self.token, private=self.private
-        )
+        for json_file in Path(self.folder_path).rglob("*.json"):
+            upload_file(
+                path_or_fileobj=str(json_file),
+                path_in_repo=json_file.name,
+                repo_id=self.repo_id,
+                repo_type="dataset",
+                token=self.token,
+                commit_message=f"Upload {json_file.name}",
+            )
 
 
 CommitScheduler.push_to_hub = push_to_hub
