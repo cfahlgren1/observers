@@ -1,0 +1,55 @@
+site_name: Observers Docs
+site_url: https://observers-io.github.io/observers
+site_author: Parag Ekbote
+site_description: A Lightweight Library for AI Observability
+theme:
+  name: material
+  font:
+    text: Merriweather Sans
+    code: Red Hat Mono
+  features:
+    - navigation.footer
+  palette:
+    # Dark Mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Dark mode
+      primary: green
+      accent: deep purple
+
+    # Light Mode
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Light mode
+      primary: black
+      accent: deep blue
+
+markdown_extensions:
+  - attr_list
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+
+# Repository
+repo_name: cfahlgren1/observers
+repo_url: https://github.com/cfahlgren1/observers
+edit_uri: edit/main/docs/
+
+extra:
+  social:
+    - icon: simple/github
+      link: https://github.com/cfahlgren1/observers
