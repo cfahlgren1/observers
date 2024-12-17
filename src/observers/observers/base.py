@@ -2,15 +2,34 @@ import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional
+from typing_extensions import Literal
 
 if TYPE_CHECKING:
     from argilla import Argilla
 
 
 @dataclass
+class Function:
+    """Function tool call information"""
+
+    name: str
+    arguments: str
+
+
+@dataclass
+class ToolCall:
+    """Tool call information"""
+
+    id: str
+    type: Literal["function"]
+    function: Function
+
+
+@dataclass
 class Message:
     role: Literal["system", "user", "assistant", "function"]
     content: str
+    tool_calls: Optional[List[ToolCall]] = None
 
 
 @dataclass

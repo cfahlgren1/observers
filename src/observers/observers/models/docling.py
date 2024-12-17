@@ -151,7 +151,6 @@ class DoclingRecord(Record):
             "properties",
             "error",
             "raw_response",
-            "synced_at",
         ]
 
     @property
@@ -175,7 +174,6 @@ class DoclingRecord(Record):
             properties JSON,
             error VARCHAR,
             raw_response JSON,
-            synced_at TIMESTAMP
         )
         """
 

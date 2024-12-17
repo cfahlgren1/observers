@@ -187,7 +187,6 @@ class DatasetsStore(Store):
         with self._scheduler.lock:
             with (self._scheduler.folder_path / self._filename).open("a") as f:
                 record_dict = asdict(record)
-                record_dict["synced_at"] = None
 
                 # Handle JSON fields
                 for json_field in record.json_fields:

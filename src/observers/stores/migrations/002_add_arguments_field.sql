@@ -1,0 +1,5 @@
+ALTER TABLE IF EXISTS openai_records 
+ADD COLUMN IF NOT EXISTS arguments JSON;
+
+ALTER TABLE IF EXISTS openai_records 
+DROP COLUMN IF EXISTS synced_at;
