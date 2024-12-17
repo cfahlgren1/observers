@@ -25,7 +25,7 @@ license = {text = "Apache 2"}
 dependencies = [
     "duckdb>=1.0.0",
     "datasets>=3.0.0",
-    "openai>=1.50.0",
+    "openai>=1.57.4",
     "argilla>=2.3.0",
 ]
 
@@ -40,6 +40,10 @@ dev = [
 ]
 litellm = [
     "litellm>=1.52",
+]
+transformers = [
+    "transformers>=4.46.0",
+    "accelerate>=1.2.1"
 ]
 docling = [
     "docling>=2.8.0",

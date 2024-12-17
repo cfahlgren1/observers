@@ -11,16 +11,17 @@ from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
 
+from PIL import Image
+
 from datasets import Dataset
 from datasets import Image as DatasetImage
 from datasets.utils.logging import disable_progress_bar
 from huggingface_hub import CommitScheduler, login, metadata_update, upload_file, whoami
-from PIL import Image
-
 from observers.stores.base import Store
 
+
 if TYPE_CHECKING:
-    from observers.observers.base import Record
+    from observers.base import Record
 
 
 disable_progress_bar()

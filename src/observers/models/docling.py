@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Union
 
-from observers.observers.base import Record
+from observers.base import Record
 from observers.stores.duckdb import DuckDBStore
 
 if TYPE_CHECKING:
@@ -29,6 +29,7 @@ class DoclingRecord(Record):
     Data class for storing Docling API error information
     """
 
+    client_name: str = "docling"
     version: str = None
     mime_type: str = None
     label: str = None
@@ -117,7 +118,7 @@ class DoclingRecord(Record):
 
     @property
     def table_name(self):
-        return "docling_records"
+        return f"{self.client_name}_records"
 
     @property
     def json_fields(self):

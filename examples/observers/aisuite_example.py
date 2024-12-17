@@ -1,7 +1,9 @@
 import os
 
 import aisuite as ai
-from observers.observers import wrap_aisuite
+
+from observers import wrap_aisuite
+
 
 # Initialize AI Suite client
 client = ai.Client()

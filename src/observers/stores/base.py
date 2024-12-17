@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from observers.observers.base import Record
+    from observers.base import Record
 
 
 @dataclass

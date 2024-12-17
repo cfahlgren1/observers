@@ -2,11 +2,10 @@ import os
 import uuid
 from unittest.mock import MagicMock, patch
 
+import litellm
 import pytest
-from openai.types.chat import (
-    ChatCompletion,
-    ChatCompletionMessage,
-)
+from huggingface_hub import ChatCompletionOutput
+from openai.types.chat import ChatCompletion, ChatCompletionMessage
 from openai.types.chat.chat_completion import Choice, CompletionUsage
 
 
@@ -26,7 +25,7 @@ def get_example_files():
 def mock_clients():
     """Fixture providing mocked API clients"""
 
-    def get_fake_return():
+    def openai_fake_return(*args, **kwargs):
         return ChatCompletion(
             id=str(uuid.uuid4()),
             choices=[
@@ -39,7 +38,7 @@ def mock_clients():
                     logprobs=None,
                 )
             ],
-            model="gpt-4o",
+            model="gpt-4",
             usage=CompletionUsage(
                 prompt_tokens=10, completion_tokens=10, total_tokens=20
             ),
@@ -48,29 +47,40 @@ def mock_clients():
             system_fingerprint=None,
         )
 
-    mock_openai = MagicMock()
-    mock_openai.chat.completions.create.side_effect = (
-        lambda *args, **kwargs: get_fake_return()
-    )
+    def hf_fake_return(*args, **kwargs):
+        return ChatCompletionOutput(
+            id=str(uuid.uuid4()),
+            model="Qwen/Qwen2.5-Coder-32B-Instruct",
+            choices=[{"message": {"content": "Hello, world!"}}],
+            created=1727238800,
+            usage={"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
+            system_fingerprint=None,
+        )
 
-    mock_aisuite = MagicMock()
-    mock_aisuite.chat.completions.create.side_effect = (
-        lambda *args, **kwargs: get_fake_return()
-    )
+    # Create base mock for other clients
+    base_mock = MagicMock()
+    base_mock.chat.completions.create = MagicMock(side_effect=openai_fake_return)
 
-    mock_litellm = MagicMock(side_effect=lambda *args, **kwargs: get_fake_return())
+    hf_mock = MagicMock()
+    hf_mock.chat.completions.create = MagicMock(side_effect=hf_fake_return)
 
     mocks = {
-        "openai.OpenAI": patch("openai.OpenAI", return_value=mock_openai),
-        "aisuite.Client": patch("aisuite.Client", return_value=mock_aisuite),
-        "litellm.completion": patch("litellm.completion", mock_litellm),
+        # Sync clients
+        "openai.OpenAI": patch("openai.OpenAI", return_value=base_mock),
+        "litellm.completion": patch("litellm.completion", litellm.mock_completion),
+        "aisuite.Client": patch("aisuite.Client", return_value=base_mock),
+        "huggingface_hub.InferenceClient": patch(
+            "huggingface_hub.InferenceClient", return_value=hf_mock
+        ),
     }
 
+    # Start all patches
     for mock in mocks.values():
         mock.start()
 
     yield
 
+    # Stop all patches
     for mock in mocks.values():
         mock.stop()
 
@@ -78,6 +88,7 @@ def mock_clients():
 @pytest.mark.parametrize("example_path", get_example_files())
 def test_example_files_execute(example_path, mock_clients):
     """Test that example files execute without errors"""
+
     if not get_example_files():
         pytest.skip("Examples directory not found")
 

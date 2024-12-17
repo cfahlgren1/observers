@@ -1,18 +1,18 @@
 # stdlib features
 from dataclasses import dataclass
-from typing import Optional
 from importlib.metadata import PackageNotFoundError, version
-
-# Observers internal interfaces
-from observers.observers.base import Record
-from observers.stores.base import Store
+from typing import Optional
 
 # Actual dependencies
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider, Tracer, Span
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter
-from opentelemetry.sdk.resources import Resource
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import Span, Tracer, TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter
+
+# Observers internal interfaces
+from observers.base import Record
+from observers.stores.base import Store
 
 
 def flatten_dict(d, prefix=""):

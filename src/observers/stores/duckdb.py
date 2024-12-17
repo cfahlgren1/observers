@@ -9,7 +9,7 @@ import duckdb
 from observers.stores.base import Store
 
 if TYPE_CHECKING:
-    from observers.observers.base import Record
+    from observers.base import Record
 
 DEFAULT_DB_NAME = "store.db"
 
