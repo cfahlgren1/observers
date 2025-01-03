@@ -1,5 +1,5 @@
 from argilla import TextQuestion  # noqa
-from observers.observers import wrap_openai
+from observers import wrap_openai
 from observers.stores import ArgillaStore
 from openai import OpenAI
 

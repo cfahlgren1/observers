@@ -19,6 +19,7 @@ class Record(ABC):
     Base class for storing model response information
     """
 
+    client_name: str = field(init=False)
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     tags: List[str] = None
     properties: Dict[str, Any] = None

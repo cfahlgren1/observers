@@ -15,8 +15,9 @@ from argilla import (
 
 from observers.stores.base import Store
 
+
 if TYPE_CHECKING:
-    from observers.observers.base import Record
+    from observers.base import Record
 
 
 @dataclass
@@ -112,3 +113,22 @@ class ArgillaStore(Store):
 
         record_dict = {k: v for k, v in record_dict.items() if k in self._dataset_keys}
         self._dataset.records.log([record_dict])
+
+    async def add_async(self, record: "Record"):
+        """Add a new record to the database asynchronously"""
+        if not self._dataset:
+            self._init_table(record)
+
+        record_dict = asdict(record)
+
+        for text_field in record.text_fields:
+            if text_field in record_dict:
+                record_dict[f"{text_field}_length"] = len(record_dict[text_field])
+
+        record_dict = {k: v for k, v in record_dict.items() if k in self._dataset_keys}
+        # Use argilla's native async API
+        await self._dataset.records.alog(
+            [record_dict],
+            background=True,
+            verbose=False,
+        )

@@ -1,7 +1,9 @@
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
-from observers.observers.models.docling import wrap_docling
+
+from observers import wrap_docling
+
 
 # Configure PDF pipeline options
 pipeline_options = PdfPipelineOptions(

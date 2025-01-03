@@ -1,4 +1,4 @@
-from observers.observers import wrap_openai
+from observers import wrap_openai
 from observers.stores import DuckDBStore
 from openai import OpenAI
 

@@ -1,6 +1,8 @@
-from observers.observers import wrap_openai
-from observers.stores import DatasetsStore
 from openai import OpenAI
+
+from observers import wrap_openai
+from observers.stores import DatasetsStore
+
 
 store = DatasetsStore(
     repo_name="gpt-4o-mini-vision-traces",

@@ -1,18 +1,19 @@
 # stdlib features
+import asyncio
 from dataclasses import dataclass
-from typing import Optional
 from importlib.metadata import PackageNotFoundError, version
-
-# Observers internal interfaces
-from observers.observers.base import Record
-from observers.stores.base import Store
+from typing import Optional
 
 # Actual dependencies
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider, Tracer, Span
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter
-from opentelemetry.sdk.resources import Resource
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import Span, Tracer, TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter
+
+# Observers internal interfaces
+from observers.base import Record
+from observers.stores.base import Store
 
 
 def flatten_dict(d, prefix=""):
@@ -117,3 +118,7 @@ class OpenTelemetryStore(Store):
         """Initialize the dataset (no op)"""
         # We don't usually do this in otel, a dataset is (typically)
         # initialized by writing to it, but, it's part of the Store interface.
+
+    async def add_async(self, record: Record):
+        """Add a new record to the store asynchronously"""
+        await asyncio.to_thread(self.add, record)

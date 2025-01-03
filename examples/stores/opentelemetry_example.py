@@ -1,7 +1,9 @@
-from observers.observers import wrap_openai
-from observers.stores.opentelemetry import OpenTelemetryStore
-from openai import OpenAI
 import os
+
+from openai import OpenAI
+
+from observers import wrap_openai
+from observers.stores.opentelemetry import OpenTelemetryStore
 
 
 # Use your usual environment variables to configure OpenTelemetry

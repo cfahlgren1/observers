@@ -1,3 +1,4 @@
+import asyncio
 import atexit
 import base64
 import hashlib
@@ -11,16 +12,17 @@ from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
 
+from PIL import Image
+
 from datasets import Dataset
 from datasets import Image as DatasetImage
 from datasets.utils.logging import disable_progress_bar
 from huggingface_hub import CommitScheduler, login, metadata_update, upload_file, whoami
-from PIL import Image
-
 from observers.stores.base import Store
 
+
 if TYPE_CHECKING:
-    from observers.observers.base import Record
+    from observers.base import Record
 
 
 disable_progress_bar()
@@ -232,3 +234,19 @@ class DatasetsStore(Store):
                     f.flush()
                 except Exception:
                     raise
+
+    async def add_async(self, record: "Record"):
+        """Add a new record to the database asynchronously"""
+        await asyncio.to_thread(self.add, record)
+
+    async def close_async(self):
+        """Close the dataset store asynchronously"""
+        if self._scheduler:
+            await asyncio.to_thread(self._scheduler.__exit__, None, None, None)
+            self._scheduler = None
+
+    def close(self):
+        """Close the dataset store synchronously"""
+        if self._scheduler:
+            self._scheduler.__exit__(None, None, None)
+            self._scheduler = None
