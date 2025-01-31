@@ -35,19 +35,18 @@ We differentiate between observers and stores. Observers wrap generative AI APIs
 To get started you can run the code below. It sends requests to a HF serverless endpoint and log the interactions into a Hub dataset, using the default store `DatasetsStore`. The dataset will be pushed to your personal workspace (http://hf.co/{your_username}). To learn how to configure stores, go to the next section.
 
 ```python
-from observers.observers import wrap_openai
-from observers.stores import DuckDBStore
 from openai import OpenAI
-
-store = DuckDBStore()
+from observers import wrap_openai
 
 openai_client = OpenAI()
-client = wrap_openai(openai_client, store=store)
+
+client = wrap_openai(openai_client)
 
 response = client.chat.completions.create(
     model="gpt-4o",
     messages=[{"role": "user", "content": "Tell me a joke."}],
 )
+print(response)
 ```
 
 ## Observers

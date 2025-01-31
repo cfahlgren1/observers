@@ -46,7 +46,7 @@ def wrap_aisuite(
     return ChatCompletionObserver(
         client=client,
         create=client.chat.completions.create,
-        format_input=lambda inputs, **kwargs: {"messages": inputs, **kwargs},
+        format_input=lambda messages, **kwargs: kwargs | {"messages": messages},
         parse_response=AisuiteRecord.from_response,
         store=store,
         tags=tags,
