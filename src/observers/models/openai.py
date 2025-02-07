@@ -1,6 +1,6 @@
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
-
+from observers.stores.duckdb import DuckDBStore
 from openai import AsyncOpenAI, OpenAI
 from typing_extensions import Self
 
@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from openai.types.chat import ChatCompletion, ChatCompletionChunk
 
     from observers.stores.datasets import DatasetsStore
-    from observers.stores.duckdb import DuckDBStore
 
 
 class OpenAIRecord(ChatCompletionRecord):
@@ -25,11 +24,14 @@ class OpenAIRecord(ChatCompletionRecord):
         cls,
         response: Union[List["ChatCompletionChunk"], "ChatCompletion"] = None,
         error=None,
+        messages=None,
         **kwargs,
     ) -> Self:
         """Create a response record from an API response or error"""
         if not response:
-            return cls(finish_reason="error", error=str(error), **kwargs)
+            return cls(
+                finish_reason="error", error=str(error), messages=messages, **kwargs
+            )
 
         # Handle streaming responses
         if isinstance(response, list):
@@ -56,6 +58,7 @@ class OpenAIRecord(ChatCompletionRecord):
 
             return cls(
                 id=first_dump.get("id") or str(uuid.uuid4()),
+                messages=messages,
                 completion_tokens=completion_tokens,
                 prompt_tokens=prompt_tokens,
                 total_tokens=total_tokens,
@@ -73,6 +76,7 @@ class OpenAIRecord(ChatCompletionRecord):
         usage = response_dump.get("usage", {}) or {}
         return cls(
             id=response.id or str(uuid.uuid4()),
+            messages=messages,
             completion_tokens=usage.get("completion_tokens"),
             prompt_tokens=usage.get("prompt_tokens"),
             total_tokens=usage.get("total_tokens"),
@@ -87,7 +91,7 @@ class OpenAIRecord(ChatCompletionRecord):
 
 def wrap_openai(
     client: Union["OpenAI", "AsyncOpenAI"],
-    store: Optional[Union["DuckDBStore", "DatasetsStore"]] = None,
+    store: Optional[Union["DuckDBStore", "DatasetsStore"]] = DuckDBStore(),
     tags: Optional[List[str]] = None,
     properties: Optional[Dict[str, Any]] = None,
     logging_rate: Optional[float] = 1,
@@ -114,7 +118,7 @@ def wrap_openai(
     observer_args = {
         "client": client,
         "create": client.chat.completions.create,
-        "format_input": lambda inputs, **kwargs: {"messages": inputs, **kwargs},
+        "format_input": lambda messages, **kwargs: kwargs | {"messages": messages},
         "parse_response": OpenAIRecord.from_response,
         "store": store,
         "tags": tags,

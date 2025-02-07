@@ -22,6 +22,7 @@ class ChatCompletionRecord(Record):
 
     model: str = None
     timestamp: str = field(default_factory=lambda: datetime.datetime.now().isoformat())
+    arguments: Optional[Dict[str, Any]] = None
 
     messages: List[Message] = None
     assistant_message: Optional[str] = None
@@ -55,7 +56,7 @@ class ChatCompletionRecord(Record):
             "properties",
             "error",
             "raw_response",
-            "synced_at",
+            "arguments",
         ]
 
     @property
@@ -65,7 +66,7 @@ class ChatCompletionRecord(Record):
             id VARCHAR PRIMARY KEY,
             model VARCHAR,
             timestamp TIMESTAMP,
-            messages STRUCT(role VARCHAR, content VARCHAR)[],
+            messages JSON,
             assistant_message TEXT,
             completion_tokens INTEGER,
             prompt_tokens INTEGER,
@@ -77,7 +78,7 @@ class ChatCompletionRecord(Record):
             properties JSON,
             error VARCHAR,
             raw_response JSON,
-            synced_at TIMESTAMP
+            arguments JSON,
         )
         """
 
@@ -160,7 +161,14 @@ class ChatCompletionRecord(Record):
 
     @property
     def json_fields(self):
-        return ["tool_calls", "function_call", "tags", "properties", "raw_response"]
+        return [
+            "tool_calls",
+            "function_call",
+            "tags",
+            "properties",
+            "raw_response",
+            "arguments",
+        ]
 
     @property
     def image_fields(self):
@@ -223,13 +231,17 @@ class ChatCompletionObserver:
     def completions(self) -> Self:
         return self
 
-    def _log_record(self, response, error=None, model=None):
+    def _log_record(
+        self, response, error=None, model=None, messages=None, arguments=None
+    ):
         record = self.parse_response(
             response,
             error=error,
             model=model,
+            messages=messages,
             tags=self.tags,
             properties=self.properties,
+            arguments=arguments,
         )
         if random.random() < self.logging_rate:
             self.store.add(record)
@@ -255,30 +267,47 @@ class ChatCompletionObserver:
         """
         response = None
         kwargs = self.handle_kwargs(kwargs)
+        excluded_args = {"model", "messages", "tags", "properties"}
+        arguments = {k: v for k, v in kwargs.items() if k not in excluded_args}
         model = kwargs.get("model")
         input_data = self.format_input(messages, **kwargs)
 
         if kwargs.get("stream", False):
 
             def stream_responses():
-                response = []
+                response_buffer = []
                 try:
                     for chunk in self.create_fn(**input_data):
                         yield chunk
-                        response.append(chunk)
-                    self._log_record(response, model=model)
+                        response_buffer.append(chunk)
+                    self._log_record(
+                        response_buffer,
+                        model=model,
+                        messages=messages,
+                        arguments=arguments,
+                    )
                 except Exception as e:
-                    self._log_record(response, error=e, model=model)
+                    self._log_record(
+                        response_buffer,
+                        error=e,
+                        model=model,
+                        messages=messages,
+                        arguments=arguments,
+                    )
                     raise
 
             return stream_responses()
 
         try:
             response = self.create_fn(**input_data)
-            self._log_record(response, model=model)
+            self._log_record(
+                response, model=model, messages=messages, arguments=arguments
+            )
             return response
         except Exception as e:
-            self._log_record(response, error=e, model=model)
+            self._log_record(
+                response, error=e, model=model, messages=messages, arguments=arguments
+            )
             raise
 
     def handle_kwargs(self, kwargs: dict[str, Any]) -> dict[str, Any]:
@@ -318,13 +347,17 @@ class AsyncChatCompletionObserver(ChatCompletionObserver):
             The logging rate to use for logging, defaults to 1
     """
 
-    async def _log_record_async(self, response, error=None, model=None):
+    async def _log_record_async(
+        self, response, error=None, model=None, messages=None, arguments=None
+    ):
         record = self.parse_response(
             response,
             error=error,
             model=model,
+            messages=messages,
             tags=self.tags,
             properties=self.properties,
+            arguments=arguments,
         )
         if random.random() < self.logging_rate:
             await self.store.add_async(record)
@@ -346,30 +379,47 @@ class AsyncChatCompletionObserver(ChatCompletionObserver):
         """
         response = None
         kwargs = self.handle_kwargs(kwargs)
-        input_data = self.format_input(messages, **kwargs)
+        excluded_args = {"model", "messages", "tags", "properties"}
+        arguments = {k: v for k, v in kwargs.items() if k not in excluded_args}
         model = kwargs.get("model")
+        input_data = self.format_input(messages, **kwargs)
 
         if kwargs.get("stream", False):
 
             async def stream_responses():
-                response = []
+                response_buffer = []
                 try:
                     async for chunk in await self.create_fn(**input_data):
                         yield chunk
-                        response.append(chunk)
-                    await self._log_record_async(response, model=model)
+                        response_buffer.append(chunk)
+                    await self._log_record_async(
+                        response_buffer,
+                        model=model,
+                        messages=messages,
+                        arguments=arguments,
+                    )
                 except Exception as e:
-                    await self._log_record_async(response, error=e, model=model)
+                    await self._log_record_async(
+                        response_buffer,
+                        error=e,
+                        model=model,
+                        messages=messages,
+                        arguments=arguments,
+                    )
                     raise
 
             return stream_responses()
 
         try:
             response = await self.create_fn(**input_data)
-            await self._log_record_async(response, model=model)
+            await self._log_record_async(
+                response, model=model, messages=messages, arguments=arguments
+            )
             return response
         except Exception as e:
-            await self._log_record_async(response, error=e, model=model)
+            await self._log_record_async(
+                response, error=e, model=model, messages=messages, arguments=arguments
+            )
             raise
 
     async def __aenter__(self) -> "AsyncChatCompletionObserver":
